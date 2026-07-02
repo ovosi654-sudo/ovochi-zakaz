@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Заказ овощей в пиццерии</title>
+</head>
+<body>
+
+    <!-- Вкладки навигации -->
+    <div>
+        <button id="tab-order" onclick="switchTab('order')">🛒 Заказ овощей</button>
+        <button id="tab-claim" onclick="switchTab('claim')">⚠️ Претензия</button>
+    </div>
+
+    <br>
+
+    <!-- Выбор пиццерии (Общий блок) -->
+    <div>
+        <label for="pizza-select">Ваша пиццерия:</label>
+        <select id="pizza-select" onchange="toggleCustomPizza()">
+            <option value="">-- Выберите из списка --</option>
+            <option value="Додо Пицца">Додо Пицца</option>
+            <option value="Папа Джонс">Папа Джонс</option>
+            <option value="Пицца Фабрика">Пицца Фабрика</option>
+            <option value="Другая">Другая пиццерия (вписать вручную)...</option>
+        </select>
+    </div>
+
+    <div id="custom-pizza-group" style="display: none;">
+        <br>
+        <label for="custom-pizza">Введите название и адрес пиццерии:</label>
+        <input type="text" id="custom-pizza" placeholder="Например: Пицца у Санчеза, ул. Мира, 14">
+    </div>
+
+    <br>
+
+    <!-- Вкладка №1: ЗАКАЗ ОВОЩЕЙ -->
+    <form id="order-form" onsubmit="sendData(event, 'Заказ')">
+        <div id="section-order">
+            <h2>Актуальные цены</h2>
+            <div id="current-date">на сегодня</div>
+            <div id="load-status" style="font-style: italic; color: gray;">Синхронизация цен с таблицей...</div>
+            
+            <br>
+
+            <!-- Список 6 товаров -->
+            <div>
+                <label>🍅 Томаты: <span id="p-tomatoes">250</span> руб/кг</label>
+                <input type="number" id="qty-tomatoes" min="0" step="any" placeholder="0" oninput="calculateTotal()">
+            </div>
+            <br>
+            <div>
+                <label>🫑 Перец зеленый: <span id="p-pepper">320</span> руб/кг</label>
+                <input type="number" id="qty-pepper" min="0" step="any" placeholder="0" oninput="calculateTotal()">
+            </div>
+            <br>
+            <div>
+                <label>🥬 Салат айсберг: <span id="p-iceberg">180</span> руб/кг</label>
+                <input type="number" id="qty-iceberg" min="0" step="any" placeholder="0" oninput="calculateTotal()">
+            </div>
+            <br>
+            <div>
+                <label>🍒 Черри: <span id="p-cherry">400</span> руб/кг</label>
+                <input type="number" id="qty-cherry" min="0" step="any" placeholder="0" oninput="calculateTotal()">
+            </div>
+            <br>
+            <div>
+                <label>🧅 Лук красный: <span id="p-onion">90</span> руб/кг</label>
+                <input type="number" id="qty-onion" min="0" step="any" placeholder="0" oninput="calculateTotal()">
+            </div>
+            <br>
+            <div>
+                <label>🍄 Шампиньоны: <span id="p-mushrooms">280</span> руб/кг</label>
+                <input type="number" id="qty-mushrooms" min="0" step="any" placeholder="0" oninput="calculateTotal()">
+            </div>
+
+            <br>
+            <div><strong>Итого: <span id="total-price">0</span> руб.</strong></div>
+            <br>
+            <button type="submit" id="submit-order-btn">Оформить заказ</button>
+        </div>
+    </form>
+
+    <!-- Вкладка №2: ПРЕТЕНЗИЯ (РЕКЛАМАЦИЯ) -->
+    <form id="claim-form" style="display: none;" onsubmit="sendData(event, 'Претензия')">
+        <div id="section-claim">
+            <h2>Оформить рекламацию</h2>
+            <div>Рассмотрение в течение 2 часов</div>
+            
+            <br>
+
+            <div>
+                <label for="claim-reason">Причина претензии:</label>
+                <select id="claim-reason">
+                    <option value="Ненадлежащее качество">Ненадлежащее качество товара</option>
+                    <option value="Недовоз / Нехватка веса">Недовоз / Нехватка веса</option>
+                    <option value="Привезли не тот товар">Привезли не тот товар</option>
+                    <option value="Другое">Другое</option>
+                </select>
+            </div>
+            
+            <br>
+
+            <div>
+                <label for="claim-text">Описание проблемы:</label>
+                <textarea id="claim-text" rows="4" placeholder="Напишите, что не так с поставкой..." required></textarea>
+            </div>
+            
+            <br>
+            <button type="submit" id="submit-claim-btn">Отправить претензию</button>
+        </div>
+    </form>
+<script>
+    // Ваша рабочая ссылка бэкенда Google Apps Script
+    const WEB_APP_URL = "1C5pIWEXeVt1lbI1YSwnQPbKENGN9Mi1NNLhcAQfsYKM"; 
+
+    let globalPrices = { tomatoes: 250, pepper: 320, iceberg: 180, cherry: 400, onion: 90, mushrooms: 280 };
+
+    document.getElementById('current-date').innerText = 'на ' + new Date().toLocaleDateString('ru-RU', {
+        day: 'numeric', month: 'long', year: 'numeric'
+    });
+
+    // Загрузка актуальных цен из таблицы
+    async function loadPrices() {
+        if(WEB_APP_URL.includes("ВАШ_ID")) return;
+        try {
+            const response = await fetch(WEB_APP_URL);
+            const prices = await response.json();
+            
+            Object.keys(globalPrices).forEach(key => {
+                if (prices[key] !== undefined) globalPrices[key] = prices[key];
+            });
+            
+            document.getElementById('p-tomatoes').innerText = globalPrices.tomatoes;
+            document.getElementById('p-pepper').innerText = globalPrices.pepper;
+            document.getElementById('p-iceberg').innerText = globalPrices.iceberg;
+            document.getElementById('p-cherry').innerText = globalPrices.cherry;
+            document.getElementById('p-onion').innerText = globalPrices.onion;
+            document.getElementById('p-mushrooms').innerText = globalPrices.mushrooms;
+            
+            document.getElementById('load-status').innerText = "Цены успешно обновлены из Google Таблицы";
+            document.getElementById('load-status').style.color = "green";
+        } catch (error) {
+            console.error(error);
+            document.getElementById('load-status').innerText = "Ошибка синхронизации. Используются офлайн цены.";
+            document.getElementById('load-status').style.color = "red";
+        }
+    }
+
+    // Калькулятор суммы заказа
+    function calculateTotal() {
+        const t = parseFloat(document.getElementById('qty-tomatoes').value) || 0;
+        const p = parseFloat(document.getElementById('qty-pepper').value) || 0;
+        const i = parseFloat(document.getElementById('qty-iceberg').value) || 0;
+        const c = parseFloat(document.getElementById('qty-cherry').value) || 0;
+        const o = parseFloat(document.getElementById('qty-onion').value) || 0;
+        const m = parseFloat(document.getElementById('qty-mushrooms').value) || 0;
+        
+        const total = (t * globalPrices.tomatoes) + (p * globalPrices.pepper) + (i * globalPrices.iceberg) + 
+                      (c * globalPrices.cherry) + (o * globalPrices.onion) + (m * globalPrices.mushrooms);
+                      
+        document.getElementById('total-price').innerText = total.toFixed(2);
+    }
+
+    // Интерактивное переключение вкладок Заказ / Претензия
+    function switchTab(tabName) {
+        if (tabName === 'order') {
+            document.getElementById('order-form').style.display = 'block';
+            document.getElementById('claim-form').style.display = 'none';
+        } else if (tabName === 'claim') {
+            document.getElementById('order-form').style.display = 'none';
+            document.getElementById('claim-form').style.display = 'block';
+        }
+    }
+
+    function toggleCustomPizza() {
+        const select = document.getElementById('pizza-select');
+        const customGroup = document.getElementById('custom-pizza-group');
+        customGroup.style.display = select.value === 'Другая' ? 'block' : 'none';
+    }
+
+    // Отправка данных в формате JSON (Текстовый поток)
+    async function sendData(event, type) {
+        event.preventDefault();
+        
+        const selectValue = document.getElementById('pizza-select').value;
+        const pizza = selectValue === 'Другая' ? document.getElementById('custom-pizza').value : selectValue;
+        
+        if (!pizza) return alert('Пожалуйста, выберите или укажите вашу пиццерию.');
+
+        let payload = { type: type, pizza: pizza };
+
+        if (type === 'Заказ') {
+            const t = parseFloat(document.getElementById('qty-tomatoes').value) || 0;
+            const p = parseFloat(document.getElementById('qty-pepper').value) || 0;
+            const i = parseFloat(document.getElementById('qty-iceberg').value) || 0;
+            const c = parseFloat(document.getElementById('qty-cherry').value) || 0;
+            const o = parseFloat(document.getElementById('qty-onion').value) || 0;
+            const m = parseFloat(document.getElementById('qty-mushrooms').value) || 0;
+
+            if (t === 0 && p === 0 && i === 0 && c === 0 && o === 0 && m === 0) {
+                return alert('Пожалуйста, введите количество хотя бы для одного товара.');
+            }
+            payload.tomatoes = t;
+            payload.pepper = p;
+            payload.iceberg = i;
+            payload.cherry = c;
+            payload.onion = o;
+            payload.mushrooms = m;
+        } else {
+            payload.claimText = document.getElementById('claim-text').value;
+            const reasonSelect = document.getElementById('claim-reason');
+            payload.claimReason = reasonSelect.options[reasonSelect.selectedIndex].text;
+        }
+
+        const btn = type === 'Заказ' ? document.getElementById('submit-order-btn') : document.getElementById('submit-claim-btn');
+        btn.disabled = true;
+        const originalText = btn.innerText;
+        btn.innerText = "Отправка...";
+
+        try {
+            await fetch(WEB_APP_URL, {
+                method: "POST",
+                headers: { "Content-Type": "text/plain" },
+                body: JSON.stringify(payload)
+            });
+            
+            alert(`${type} успешно сохранен в Google Таблицу!`);
+            if(type === 'Заказ') document.getElementById('order-form').reset();
+            if(type === 'Претензия') document.getElementById('claim-form').reset();
+            calculateTotal();
+            
+        } catch (error) {
+            alert("Ошибка при отправке: " + error.message);
+        } finally {
+            btn.disabled = false;
+            btn.innerText = originalText;
+        }
+    }
+
+    loadPrices();
+</script>
+</body>
+</html>
