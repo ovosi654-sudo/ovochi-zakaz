@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Заказ овощей в пиццерии</title>
-    <style>
+        <style>
+        /* Базовые стили для всех устройств */
         body { 
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
             background: #f4f7f6; 
@@ -13,7 +14,7 @@
             color: #2c3e50; 
         }
         .container { 
-            max-width: 550px; 
+            max-width: 600px; 
             background: white; 
             margin: 10px auto; 
             padding: 24px; 
@@ -43,7 +44,7 @@
             display: block; 
             font-weight: 600; 
             margin-bottom: 8px; 
-            font-size: 14px; 
+            font-size: 13px; 
             color: #475569; 
             text-transform: uppercase;
             letter-spacing: 0.5px;
@@ -58,6 +59,7 @@
             background: #f8fafc; 
             color: #1e293b;
             transition: all 0.25s ease;
+            -webkit-appearance: none; /* Убирает дефолтные стили iOS */
         }
         select:focus, input:focus, textarea:focus { 
             outline: none; 
@@ -68,9 +70,11 @@
         .hidden { 
             display: none; 
         }
+        
+        /* Сетка товаров (на ПК будет в 2 колонки, на телефонах перестроится) */
         .product-list { 
-            display: flex; 
-            flex-direction: column; 
+            display: grid; 
+            grid-template-columns: repeat(2, 1fr); 
             gap: 14px; 
             margin-bottom: 24px; 
         }
@@ -79,7 +83,7 @@
             align-items: center; 
             justify-content: space-between; 
             border: 1.5px solid #e2e8f0; 
-            padding: 14px 18px; 
+            padding: 12px 14px; 
             border-radius: 14px; 
             background: white; 
             transition: transform 0.2s ease, border-color 0.2s ease;
@@ -92,14 +96,14 @@
         .product-info { 
             display: flex;
             align-items: center;
-            gap: 14px;
+            gap: 10px;
             flex: 1; 
         }
         .product-icon {
-            font-size: 26px;
+            font-size: 24px;
             background: #f1f5f9;
-            width: 46px;
-            height: 46px;
+            width: 40px;
+            height: 40px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -111,45 +115,49 @@
         }
         .product-name { 
             font-weight: 700; 
-            font-size: 16px; 
+            font-size: 15px; 
             color: #0f172a;
         }
         .price { 
             color: #10b981; 
             font-weight: 600; 
-            font-size: 14px; 
+            font-size: 13px; 
             margin-top: 2px;
         }
         .product-input { 
-            width: 90px; 
+            width: 75px; 
             text-align: center; 
             font-weight: 600;
-            padding: 10px;
+            padding: 8px;
         }
+        
         /* Вкладки */
         .tabs { 
             display: flex; 
             margin-bottom: 24px; 
             background: #f1f5f9; 
-            padding: 6px; 
+            padding: 4px; 
             border-radius: 14px; 
         }
         .tab { 
             flex: 1; 
             text-align: center; 
-            padding: 12px; 
+            padding: 12px 6px; 
             cursor: pointer; 
             font-weight: 600; 
             color: #64748b; 
             border-radius: 10px; 
-            font-size: 15px; 
+            font-size: 14px; 
             transition: all 0.2s ease; 
+            user-select: none;
         }
         .tab.active { 
             color: #0f172a; 
             background: white; 
             box-shadow: 0 4px 10px rgba(0,0,0,0.05); 
         }
+        
+        /* Кнопки */
         button { 
             width: 100%; 
             padding: 16px; 
@@ -157,16 +165,18 @@
             color: white; 
             border: none; 
             border-radius: 12px; 
-            font-size: 17px; 
+            font-size: 16px; 
             font-weight: 700; 
             cursor: pointer; 
             transition: all 0.2s ease; 
             box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+            -webkit-tap-highlight-color: transparent; /* Убирает синюю вспышку при тапе на iOS */
         }
         button:hover { 
             background: #059669; 
-            transform: translateY(-1px);
-            box-shadow: 0 6px 16px rgba(16, 185, 129, 0.3);
+        }
+        button:active {
+            transform: scale(0.98);
         }
         button:disabled {
             background: #cbd5e1;
@@ -180,14 +190,6 @@
         }
         button.claim-btn:hover { 
             background: #dc2626; 
-            box-shadow: 0 6px 16px rgba(239, 68, 68, 0.3);
-        }
-        .loading-prices { 
-            text-align: center; 
-            color: #94a3b8; 
-            font-size: 13px; 
-            margin-bottom: 14px; 
-            font-style: italic; 
         }
         .total-amount {
             text-align: right;
@@ -196,7 +198,46 @@
             margin-bottom: 20px;
             color: #1e293b;
         }
+
+        /* 📱 АДАПТИВНЫЕ СТИЛИ ДЛЯ МОБИЛЬНЫХ ТЕЛЕФОНОВ (экран меньше 480px) */
+        @media (max-width: 480px) {
+            body {
+                padding: 6px;
+            }
+            .container {
+                padding: 16px;
+                border-radius: 16px;
+                margin: 0 auto;
+            }
+            h2 {
+                font-size: 20px;
+            }
+            /* Перестраиваем сетку товаров: по 1 позиции в строку, чтобы не теснились */
+            .product-list {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+            .product-row {
+                padding: 10px 12px;
+            }
+            .product-name {
+                font-size: 14px;
+            }
+            select, input[type="text"], input[type="number"], textarea {
+                font-size: 15px; /* Предотвращает авто-зум экрана на iPhone при вводе */
+                padding: 12px;
+            }
+            .tab {
+                font-size: 13px;
+                padding: 10px 4px;
+            }
+            button {
+                padding: 14px;
+                font-size: 15px;
+            }
+        }
     </style>
+
 </head>
 <body>
 
