@@ -270,7 +270,7 @@
     <br>
 
     <!-- Вкладка №1: ЗАКАЗ ОВОЩЕЙ -->
-    <form id="order-form" onsubmit="sendData(event, 'Заказ')">
+    <form id="order-form" onsubmit="sendData(event, 'Заказ')">        
         <div id="section-order">
             <h2>Актуальные цены</h2>
             <div id="current-date">на сегодня</div>
@@ -317,7 +317,8 @@
     </form>
 
     <!-- Вкладка №2: ПРЕТЕНЗИЯ (РЕКЛАМАЦИЯ) -->
-    <form id="claim-form" style="display: none;" onsubmit="sendData(event, 'Претензия')">
+        <form id="claim-form" class="hidden" onsubmit="sendData(event, 'Претензия')">
+
         <div id="section-claim">
             <h2>Оформить рекламацию</h2>
             <div>Рассмотрение в течение 2 часов</div>
