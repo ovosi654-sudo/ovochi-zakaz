@@ -333,8 +333,15 @@
                     <option value="Привезли не тот товар">Привезли не тот товар</option>
                     <option value="Другое">Другое</option>
                 </select>
-            </div>
+            </div>            
             
+
+            <!-- 📸 НОВЫЙ БЛОК: Поле для прикрепления фотографии -->
+            <div>
+                <label for="claim-file">Прикрепить фото (не обязательно):</label>
+                <input type="file" id="claim-file" accept="image/*">
+            </div>
+
             <br>
 
             <div>
@@ -344,11 +351,11 @@
             
             <br>
             <button type="submit" id="submit-claim-btn">Отправить претензию</button>
-        </div>
+        </>
     </form>
 <script>
     // Ваша рабочая ссылка бэкенда Google Apps Script
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyOb4kZmKPufWByDXaW0vG-a4BFtSczpmBXWs6-N0_wYzGdb6qSpXYM8lreezTIowRZMw/exec"; 
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwtEEigKFKXh-pjnOf-7QjxcRVhxhX2BXrDtYX2Dw_R160TUZBku8ve7qPMzT07N3YFVg/exec"; 
 
     let globalPrices = { tomatoes: 250, pepper: 320, iceberg: 180, cherry: 400, onion: 90, mushrooms: 280 };
 
@@ -443,11 +450,34 @@
             payload.cherry = c;
             payload.onion = o;
             payload.mushrooms = m;
-        } else {
+               } else {
+            // Для рекламаций собираем текст и причину
             payload.claimText = document.getElementById('claim-text').value;
             const reasonSelect = document.getElementById('claim-reason');
             payload.claimReason = reasonSelect.options[reasonSelect.selectedIndex].text;
+
+            // Логика чтения фотографии
+            const fileInput = document.getElementById('claim-file');
+            if (fileInput.files.length > 0) {
+                const file = fileInput.files[0];
+                const reader = new FileReader();
+                
+                // Ждем, пока браузер прочитает картинку
+                const filePromise = new Promise((resolve) => {
+                    reader.onload = function(e) {
+                        resolve({
+                            base64: e.target.result.split(',')[1],
+                            name: file.name,
+                            mimeType: file.type
+                        });
+                    };
+                });
+                
+                reader.readAsDataURL(file);
+                payload.fileData = await filePromise; // Добавляем фото в пакет данных
+            }
         }
+
 
         const btn = type === 'Заказ' ? document.getElementById('submit-order-btn') : document.getElementById('submit-claim-btn');
         btn.disabled = true;
