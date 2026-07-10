@@ -353,8 +353,8 @@
             <button type="submit" id="submit-claim-btn">Отправить претензию</button>
     </form>
 <script>
-    // Ваша рабочая ссылка бэкенда Google Apps Script
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbySfESw8sOcdOloV2pRN3dJOZ-AqcbHtX7nDHjqmJn-yJmT4NTEfbLm5ys4ta_SKXCOFA/exec"; 
+    // ⚠️ ВСТАВЬТЕ СЮДА ВАШУ АКТУАЛЬНУЮ ССЫЛКУ ИЗ GOOGLE APPS СТРОГО МЕЖДУ КАВЫЧЕК
+    const WEB_APP_URL = "https://google.com"; 
 
     let globalPrices = { tomatoes: 250, pepper: 320, iceberg: 180, cherry: 400, onion: 90, mushrooms: 280 };
 
@@ -362,9 +362,47 @@
         day: 'numeric', month: 'long', year: 'numeric'
     });
 
+    // 📸 Функция автоматического сжатия и оптимизации картинок
+    function resizeImage(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = (event) => {
+                const img = new Image();
+                img.src = event.target.result;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width;
+                    let height = img.height;
+                    
+                    // Сжимаем ширину до 1000px, чтобы не перегружать память
+                    const MAX_WIDTH = 1000;
+                    if (width > MAX_WIDTH) {
+                        height *= MAX_WIDTH / width;
+                        width = MAX_WIDTH;
+                    }
+                    
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    // Конвертируем в легкий JPEG с качеством 70%
+                    const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+                    resolve({
+                        base64: dataUrl.split(',')[1], // Чистый base64 код
+                        name: file.name.replace(/\.[^/.]+$/, "") + ".jpg",
+                        mimeType: 'image/jpeg'
+                    });
+                };
+            };
+            reader.onerror = (error) => reject(error);
+        });
+    }
+
     // Загрузка актуальных цен из таблицы
     async function loadPrices() {
-        if(WEB_APP_URL.includes("ВАШ_ID")) return;
+        if (WEB_APP_URL.includes("ВАШ_ID") || !WEB_APP_URL) return;
         try {
             const response = await fetch(WEB_APP_URL);
             const prices = await response.json();
@@ -381,15 +419,15 @@
             document.getElementById('p-mushrooms').innerText = globalPrices.mushrooms;
             
             document.getElementById('load-status').innerText = "Цены успешно обновлены из Google Таблицы";
-            document.getElementById('load-status').style.color = "green";
+            document.getElementById('load-status').style.color = "#10b981";
         } catch (error) {
             console.error(error);
             document.getElementById('load-status').innerText = "Ошибка синхронизации. Используются офлайн цены.";
-            document.getElementById('load-status').style.color = "red";
+            document.getElementById('load-status').style.color = "#ef4444";
         }
     }
 
-    // Калькулятор суммы заказа
+    // Живой расчет стоимости
     function calculateTotal() {
         const t = parseFloat(document.getElementById('qty-tomatoes').value) || 0;
         const p = parseFloat(document.getElementById('qty-pepper').value) || 0;
@@ -404,7 +442,7 @@
         document.getElementById('total-price').innerText = total.toFixed(2);
     }
 
-    // Интерактивное переключение вкладок Заказ / Претензия
+    // Переключение вкладок
     function switchTab(tabName) {
         if (tabName === 'order') {
             document.getElementById('order-form').style.display = 'block';
@@ -421,7 +459,7 @@
         customGroup.style.display = select.value === 'Другая' ? 'block' : 'none';
     }
 
-    // Отправка данных в формате JSON (Текстовый поток)
+    // Главная функция отправки данных
     async function sendData(event, type) {
         event.preventDefault();
         
@@ -449,20 +487,18 @@
             payload.cherry = c;
             payload.onion = o;
             payload.mushrooms = m;
-                       } else {
-            // Для рекламаций собираем текст и причину
+        } else {
             payload.claimText = document.getElementById('claim-text').value;
             const reasonSelect = document.getElementById('claim-reason');
             payload.claimReason = reasonSelect.options[reasonSelect.selectedIndex].text;
 
-            // Сверхнадежное сжатие и прикрепление фотографии (без дублирования)
+            // Считывание и принудительное сжатие фото перед отправкой
             const fileInput = document.getElementById('claim-file');
             if (fileInput && fileInput.files.length > 0) {
                 const claimBtn = document.getElementById('submit-claim-btn');
                 if (claimBtn) claimBtn.innerText = "Сжатие фото...";
                 
                 try {
-                    // Вызываем функцию сжатия, которую мы добавили в код ранее
                     payload.fileData = await resizeImage(fileInput.files[0]); 
                 } catch (imgError) {
                     console.error("Ошибка при сжатии фото:", imgError);
@@ -470,7 +506,6 @@
             }
         }
 
-        // Объявляем и находим нужную кнопку отправки
         const btn = type === 'Заказ' ? document.getElementById('submit-order-btn') : document.getElementById('submit-claim-btn');
         if (btn) {
             btn.disabled = true;
@@ -479,17 +514,16 @@
         }
 
         try {
-            // Отправляем чистый JSON-пакет на бэкенд Google Таблиц
             await fetch(WEB_APP_URL, {
                 method: "POST",
                 headers: { "Content-Type": "text/plain" },
                 body: JSON.stringify(payload)
             });
             
-            alert(`${type} успешно зарегистрирован в системе!`);
+            alert(`${type} успешно сохранен в Google Таблицу!`);
             if (type === 'Заказ') document.getElementById('order-form').reset();
             if (type === 'Претензия') document.getElementById('claim-form').reset();
-            if (typeof calculateTotal === 'function') calculateTotal();
+            calculateTotal();
             
         } catch (error) {
             alert("Ошибка при отправке: " + error.message);
@@ -505,3 +539,4 @@
 </script>
 </body>
 </html>
+
