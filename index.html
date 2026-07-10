@@ -449,67 +449,55 @@
             payload.cherry = c;
             payload.onion = o;
             payload.mushrooms = m;
-               } else {
+                       } else {
             // Для рекламаций собираем текст и причину
             payload.claimText = document.getElementById('claim-text').value;
             const reasonSelect = document.getElementById('claim-reason');
             payload.claimReason = reasonSelect.options[reasonSelect.selectedIndex].text;
-            
 
-    // Вызываем функцию сжатия для файла
-    const fileInput = document.getElementById('claim-file');
-    if (fileInput && fileInput.files.length > 0) {
-        // fileInput.files[0] передает именно первый выбранный файл
-        payload.fileData = await resizeImage(fileInput.files[0]); 
-    }
-}
-
-
-            // Логика чтения фотографии
+            // Сверхнадежное сжатие и прикрепление фотографии (без дублирования)
             const fileInput = document.getElementById('claim-file');
-            if (fileInput.files.length > 0) {
-                const file = fileInput.files[0];
-                const reader = new FileReader();
+            if (fileInput && fileInput.files.length > 0) {
+                const claimBtn = document.getElementById('submit-claim-btn');
+                if (claimBtn) claimBtn.innerText = "Сжатие фото...";
                 
-                // Ждем, пока браузер прочитает картинку
-                const filePromise = new Promise((resolve) => {
-                    reader.onload = function(e) {
-                        resolve({
-                            base64: e.target.result.split(',')[1],
-                            name: file.name,
-                            mimeType: file.type
-                        });
-                    };
-                });
-                
-                reader.readAsDataURL(file);
-                payload.fileData = await filePromise; // Добавляем фото в пакет данных
+                try {
+                    // Вызываем функцию сжатия, которую мы добавили в код ранее
+                    payload.fileData = await resizeImage(fileInput.files[0]); 
+                } catch (imgError) {
+                    console.error("Ошибка при сжатии фото:", imgError);
+                }
             }
         }
 
-
+        // Объявляем и находим нужную кнопку отправки
         const btn = type === 'Заказ' ? document.getElementById('submit-order-btn') : document.getElementById('submit-claim-btn');
-        btn.disabled = true;
-        const originalText = btn.innerText;
-        btn.innerText = "Отправка...";
+        if (btn) {
+            btn.disabled = true;
+            var originalText = btn.innerText;
+            btn.innerText = "Отправка...";
+        }
 
         try {
+            // Отправляем чистый JSON-пакет на бэкенд Google Таблиц
             await fetch(WEB_APP_URL, {
                 method: "POST",
                 headers: { "Content-Type": "text/plain" },
                 body: JSON.stringify(payload)
             });
             
-            alert(`${type} успешно сохранен в Google Таблицу!`);
-            if(type === 'Заказ') document.getElementById('order-form').reset();
-            if(type === 'Претензия') document.getElementById('claim-form').reset();
-            calculateTotal();
+            alert(`${type} успешно зарегистрирован в системе!`);
+            if (type === 'Заказ') document.getElementById('order-form').reset();
+            if (type === 'Претензия') document.getElementById('claim-form').reset();
+            if (typeof calculateTotal === 'function') calculateTotal();
             
         } catch (error) {
             alert("Ошибка при отправке: " + error.message);
         } finally {
-            btn.disabled = false;
-            btn.innerText = originalText;
+            if (btn) {
+                btn.disabled = false;
+                btn.innerText = originalText;
+            }
         }
     }
 
