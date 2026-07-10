@@ -353,8 +353,8 @@
             <button type="submit" id="submit-claim-btn">Отправить претензию</button>
     </form>
 <script>
-    // ⚠️ ВСТАВЬТЕ СЮДА ВАШУ АКТУАЛЬНУЮ ССЫЛКУ ИЗ GOOGLE APPS СТРОГО МЕЖДУ КАВЫЧЕК
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbySfESw8sOcdOloV2pRN3dJOZ-AqcbHtX7nDHjqmJn-yJmT4NTEfbLm5ys4ta_SKXCOFA/exec"; 
+    // ⚠️ ССЫЛКА БЭКЕНДА GOOGLE APPS SCRIPT
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbysO1DJd7LmYe95M9eg6cF_T8m2gTs5FJ1a6kmen6hPqQPFbMXwz5VU_6_UhBe8aV3HgQ/exec"; 
 
     let globalPrices = { tomatoes: 250, pepper: 320, iceberg: 180, cherry: 400, onion: 90, mushrooms: 280 };
 
@@ -362,7 +362,7 @@
         day: 'numeric', month: 'long', year: 'numeric'
     });
 
-    // 📸 Функция автоматического сжатия и оптимизации картинок
+    // 📸 ИСПРАВЛЕННАЯ: Функция сжатия и оптимизации картинок
     function resizeImage(file) {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
@@ -375,7 +375,7 @@
                     let width = img.width;
                     let height = img.height;
                     
-                    // Сжимаем ширину до 1000px, чтобы не перегружать память
+                    // Ограничиваем ширину до 1000px
                     const MAX_WIDTH = 1000;
                     if (width > MAX_WIDTH) {
                         height *= MAX_WIDTH / width;
@@ -387,10 +387,10 @@
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, width, height);
                     
-                    // Конвертируем в легкий JPEG с качеством 70%
+                    // Легкий JPEG с качеством 70%
                     const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
                     resolve({
-                        base64: dataUrl.split(',')[1], // Чистый base64 код
+                        base64: dataUrl.split(',')[1], // Берем только чистый код картинки
                         name: file.name.replace(/\.[^/.]+$/, "") + ".jpg",
                         mimeType: 'image/jpeg'
                     });
@@ -402,7 +402,7 @@
 
     // Загрузка актуальных цен из таблицы
     async function loadPrices() {
-        if (WEB_APP_URL.includes("ВАШ_ID") || !WEB_APP_URL) return;
+        if (!WEB_APP_URL || WEB_APP_URL.includes("ВАШ_ID")) return;
         try {
             const response = await fetch(WEB_APP_URL);
             const prices = await response.json();
@@ -421,7 +421,7 @@
             document.getElementById('load-status').innerText = "Цены успешно обновлены из Google Таблицы";
             document.getElementById('load-status').style.color = "#10b981";
         } catch (error) {
-            console.error(error);
+            console.error("Ошибка обновления цен:", error);
             document.getElementById('load-status').innerText = "Ошибка синхронизации. Используются офлайн цены.";
             document.getElementById('load-status').style.color = "#ef4444";
         }
@@ -492,7 +492,7 @@
             const reasonSelect = document.getElementById('claim-reason');
             payload.claimReason = reasonSelect.options[reasonSelect.selectedIndex].text;
 
-            // Считывание и принудительное сжатие фото перед отправкой
+            // ИСПРАВЛЕНО: Четко передаем именно первый файл [0]
             const fileInput = document.getElementById('claim-file');
             if (fileInput && fileInput.files.length > 0) {
                 const claimBtn = document.getElementById('submit-claim-btn');
