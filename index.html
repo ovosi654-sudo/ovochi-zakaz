@@ -454,6 +454,16 @@
             payload.claimText = document.getElementById('claim-text').value;
             const reasonSelect = document.getElementById('claim-reason');
             payload.claimReason = reasonSelect.options[reasonSelect.selectedIndex].text;
+            
+
+    // Вызываем функцию сжатия для файла
+    const fileInput = document.getElementById('claim-file');
+    if (fileInput && fileInput.files.length > 0) {
+        // fileInput.files[0] передает именно первый выбранный файл
+        payload.fileData = await resizeImage(fileInput.files[0]); 
+    }
+}
+
 
             // Логика чтения фотографии
             const fileInput = document.getElementById('claim-file');
