@@ -359,7 +359,7 @@
             <button type="submit" id="submit-claim-btn">Отправить претензию</button>
     </form>
 <script>
-    // ССЫЛКА БЭКЕНДА GOOGLE APPS SCRIPT
+    // ⚠️ ВСТАВЬТЕ СЮДА ВАШУ САМУЮ СВЕЖУЮ ССЫЛКУ ИЗ GOOGLE APPS SCRIPT
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzQA-u0SS5NbxceCErjEfIKeNKRlRMzTQYPv8utolOGajNMNt5UeRnx2UvyxqPDhRstGQ/exec"; 
 
     let globalPrices = { tomatoes: 250, pepper: 320, iceberg: 180, cherry: 400, onion: 90, mushrooms: 280 };
@@ -368,7 +368,7 @@
         day: 'numeric', month: 'long', year: 'numeric'
     });
 
-    // 📸 Функция сжатия и оптимизации картинок перед отправкой
+    // 📸 Функция сжатия и оптимизации картинок брака
     function resizeImage(file) {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
@@ -381,7 +381,6 @@
                     let width = img.width;
                     let height = img.height;
                     
-                    // Пропорциональное сжатие до ширины 1000px
                     const MAX_WIDTH = 1000;
                     if (width > MAX_WIDTH) {
                         height *= MAX_WIDTH / width;
@@ -393,10 +392,9 @@
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, width, height);
                     
-                    // Перевод в легкий формат JPEG (качество 70%)
                     const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
                     resolve({
-                        base64: dataUrl.split(',')[1], // Извлекаем чистую текстовую base64-строку
+                        base64: dataUrl.split(',')[1], // Чистый base64 код без префикса
                         name: file.name.replace(/\.[^/.]+$/, "") + ".jpg",
                         mimeType: 'image/jpeg'
                     });
@@ -448,7 +446,7 @@
         document.getElementById('total-price').innerText = total.toFixed(2);
     }
 
-    // Переключение вкладок Заказ / Претензия
+    // Переключение вкладок
     function switchTab(tabName) {
         if (tabName === 'order') {
             document.getElementById('order-form').style.display = 'block';
@@ -465,7 +463,7 @@
         customGroup.style.display = select.value === 'Другая' ? 'block' : 'none';
     }
 
-    // Главная функция отправки данных формы на бэкенд
+    // Главная функция отправки данных
     async function sendData(event, type) {
         event.preventDefault();
         
@@ -487,6 +485,8 @@
             if (t === 0 && p === 0 && i === 0 && c === 0 && o === 0 && m === 0) {
                 return alert('Пожалуйста, введите количество хотя бы для одного товара.');
             }
+            
+            // НОВАЯ СТРУКТУРА: Передаем значения строго под новые переменные бэкенда столбцов
             payload.tomatoes = t;
             payload.pepper = p;
             payload.iceberg = i;
@@ -498,7 +498,6 @@
             const reasonSelect = document.getElementById('claim-reason');
             payload.claimReason = reasonSelect.options[reasonSelect.selectedIndex].text;
 
-            // Передача конкретного файла [0] в функцию сжатия
             const fileInput = document.getElementById('claim-file');
             if (fileInput && fileInput.files.length > 0) {
                 const claimBtn = document.getElementById('submit-claim-btn');
@@ -541,7 +540,6 @@
         }
     }
 
-    // Первичный запуск обновления цен
     loadPrices();
 </script>
 </body>
