@@ -359,209 +359,181 @@
     </form>
 <script>
     // ⚠️ ВСТАВЬТЕ СЮДА ВАШУ САМУЮ СВЕЖУЮ ССЫЛКУ ИЗ GOOGLE APPS SCRIPT
-    /**
- * @NotOnlyCurrentDoc
- * @OnlyCurrentDoc
- * Финальный бэкенд: Овощи в столбце А + Еженедельный архив
- */
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxooLiyvMN4cVaLzvcIFwAKKRirkxkTE4Nx1Frn1V_XaJYKOHYOKcBMDu_VeAJ2L3j7/exec"; 
 
-const SPREADSHEET_ID = "1C5pIWEXeVt1lbI1YSwnQPbKENGN9Mi1NNLhcAQfsYKM";
+    let globalPrices = { tomatoes: 250, pepper: 320, iceberg: 180, cherry: 400, onion: 90, mushrooms: 280 };      
 
-function getTargetSpreadsheet() {
-  if (SPREADSHEET_ID && SPREADSHEET_ID !== "") {
-    return SpreadsheetApp.openById(SPREADSHEET_ID);
-  }
-  return SpreadsheetApp.getActiveSpreadsheet();
-}
-
-function doGet(e) {
-  var prices = { tomatoes: 250, pepper: 320, iceberg: 180, cherry: 400, onion: 90, mushrooms: 280 };
-  try {
-    var ss = getTargetSpreadsheet();
-    var sheet = ss.getSheetByName("Цены");
-    if (sheet) {
-      var data = sheet.getDataRange().getValues();
-      data.forEach(function(row) {
-        if (!row || row.length < 2) return;
-        var name = row[0] ? row[0].toString().trim() : "";
-        var price = parseFloat(row[1]);
-        if (!isNaN(price) && name) {
-          if (name === "Томаты") prices.tomatoes = price;
-          if (name === "Перец зеленый") prices.pepper = price;
-          if (name === "Салат айсберг") prices.iceberg = price;
-          if (name === "Черри") prices.cherry = price;
-          if (name === "Лук красный") prices.onion = price;
-          if (name === "Шампиньоны") prices.mushrooms = price;
-        }
-      });
+    // 📸 Кроссплатформенное сжатие картинок (работает на iPhone и Android)
+    function resizeImage(file) {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.src = URL.createObjectURL(file);
+            
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                let width = img.width;
+                let height = img.height;
+                
+                const MAX_SIZE = 800; 
+                if (width > height) {
+                    if (width > MAX_SIZE) {
+                        height *= MAX_SIZE / width;
+                        width = MAX_SIZE;
+                    }
+                } else {
+                    if (height > MAX_SIZE) {
+                        width *= MAX_SIZE / height;
+                        height = MAX_SIZE;
+                    }
+                }
+                
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                
+                const dataUrl = canvas.toDataURL('image/jpeg', 0.4); 
+                const base64Clean = dataUrl.replace(/^data:image\/[a-z]+;base64,/, ""); 
+                
+                URL.revokeObjectURL(img.src); 
+                
+                resolve({
+                    base64: base64Clean,
+                    name: "phone_photo_" + Date.now() + ".jpg",
+                    mimeType: "image/jpeg"
+                });
+            };
+            
+            img.onerror = (error) => reject(error);
+        });
     }
-  } catch(err) {}
-  return ContentService.createTextOutput(JSON.stringify(prices)).setMimeType(ContentService.MimeType.JSON);
-}
 
-function doPost(e) {
-  try {
-    var ss = getTargetSpreadsheet();
-    var rawData = e.postData ? e.postData.contents : "";
-    if (!rawData) throw new Error("Пустой запрос");
-    
-    var params = JSON.parse(rawData);
-    var type = params.type || "Заказ";
-    
-    if (type === "Претензия") {
-      var sheet = ss.getSheetByName("Претензии");
-      if (!sheet) sheet = ss.insertSheet("Претензии");
-      if (sheet.getLastRow() == 0) {
-        sheet.appendRow(["Дата и время", "Пиццерия", "Категория проблемы", "Описание рекламации", "Фотография брака"]);
-      }
-      
-      var nextRow = sheet.getLastRow() + 1;
-      sheet.setRowHeight(nextRow, 30); // Компактная высота для текстовой ссылки
-      
-      var photoValue = "Фото не прикреплено";
-      
-      // 💾 Загрузка файла на Google Диск
-      if (params.fileData && params.fileData.base64) {
+    // Загрузка актуальных цен из таблицы
+    async function loadPrices() {
+        if (!WEB_APP_URL || WEB_APP_URL.includes("ВАШ_ID")) return;
         try {
-          var rawBase64 = Array.isArray(params.fileData.base64) ? params.fileData.base64.join(',') : params.fileData.base64;
-          var cleanBase64 = rawBase64.replace(/^data:image\/[a-z]+;base64,/, "").replace(/\s/g, "");
-          var decodedFile = Utilities.base64Decode(cleanBase64);
-          var blob = Utilities.newBlob(decodedFile, params.fileData.mimeType || "image/jpeg", "claim_" + Date.now() + ".jpg");
-          
-          var file = DriveApp.createFile(blob);
-          file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-          
-          photoValue = file.getUrl(); 
-        } catch(fileErr) {
-          photoValue = "Ошибка сохранения на Диск: " + fileErr.toString(); 
+            const response = await fetch(WEB_APP_URL);
+            const prices = await response.json();
+            
+            Object.keys(globalPrices).forEach(key => {
+                if (prices[key] !== undefined) globalPrices[key] = prices[key];
+            });
+            
+            if(document.getElementById('p-tomatoes')) document.getElementById('p-tomatoes').innerText = globalPrices.tomatoes;
+            if(document.getElementById('p-pepper')) document.getElementById('p-pepper').innerText = globalPrices.pepper;
+            if(document.getElementById('p-iceberg')) document.getElementById('p-iceberg').innerText = globalPrices.iceberg;
+            if(document.getElementById('p-cherry')) document.getElementById('p-cherry').innerText = globalPrices.cherry;
+            if(document.getElementById('p-onion')) document.getElementById('p-onion').innerText = globalPrices.onion;
+            if(document.getElementById('p-mushrooms')) document.getElementById('p-mushrooms').innerText = globalPrices.mushrooms;
+            
+            if(document.getElementById('load-status')) {
+                document.getElementById('load-status').innerText = "Цены успешно обновлены из Google Таблицы";
+                document.getElementById('load-status').style.color = "#10b981";
+            }
+        } catch (error) {
+            console.error("Ошибка обновления цен:", error);
+            if(document.getElementById('load-status')) {
+                document.getElementById('load-status').innerText = "Ошибка синхронизации. Используются офлайн цены.";
+                document.getElementById('load-status').style.color = "#ef4444";
+            }
         }
-      }
+    }
 
-      // Отправляем строку в таблицу один раз, включая правильное значение photoValue
-      sheet.appendRow([
-        new Date().toLocaleString("ru-RU"), 
-        params.pizza || "Не указана", 
-        params.claimReason || "Другое", 
-        params.claimText || "", 
-        photoValue
-      ]);
+    // Живой расчет стоимости
+    function calculateTotal() {
+        const t = parseFloat(document.getElementById('qty-tomatoes').value) || 0;
+        const p = parseFloat(document.getElementById('qty-pepper').value) || 0;
+        const i = parseFloat(document.getElementById('qty-iceberg').value) || 0;
+        const c = parseFloat(document.getElementById('qty-cherry').value) || 0;
+        const o = parseFloat(document.getElementById('qty-onion').value) || 0;
+        const m = parseFloat(document.getElementById('qty-mushrooms').value) || 0;
+        
+        const total = (t * globalPrices.tomatoes) + (p * globalPrices.pepper) + (i * globalPrices.iceberg) + 
+                      (c * globalPrices.cherry) + (o * globalPrices.onion) + (m * globalPrices.mushrooms);
+                      
+        if(document.getElementById('total-price')) document.getElementById('total-price').innerText = total.toFixed(2);
+    }
 
-    } else {
-      // 🛒 МАТРИЦА СУММИРОВАНИЯ (ОВОЩИ В СТОЛБЦЕ А)
-      var sheet = ss.getSheetByName("Заказы");
-      if (!sheet) throw new Error("Лист Заказы не найден");
-      
-      var pizzaName = params.pizza || "";
-      
-      var colMap = {
-        "Голубое-1": 2,
-        "Лобня-2": 3,
-        "Москва 12-3": 4,
-        "Москва 12-4": 5,
-        "Москва 12-1": 6,
-        "Москва 12-2": 7,
-        "Москва 12-5": 8
-      };
-      
-      // ИСПРАВЛЕНО: Томаты стали первыми (Строка 2)
-      var rowMap = {
-        "tomatoes": 2,
-        "pepper": 3,
-        "iceberg": 4,
-        "cherry": 5,
-        "onion": 6,
-        "mushrooms": 7
-      };
-      
-      var targetCol = colMap[pizzaName];
-      if (!targetCol) throw new Error("Неизвестная пиццерия: " + pizzaName);
-      
-      var incomingData = {
-        "tomatoes": parseFloat(params.tomatoes) || 0,
-        "pepper": parseFloat(params.pepper) || 0,
-        "iceberg": parseFloat(params.iceberg) || 0,
-        "cherry": parseFloat(params.cherry) || 0,
-        "onion": parseFloat(params.onion) || 0,
-        "mushrooms": parseFloat(params.mushrooms) || 0
-      };
-      
-      Object.keys(incomingData).forEach(function(key) {
-        var weight = incomingData[key];
-        if (weight > 0) {
-          var targetRow = rowMap[key];
-          var range = sheet.getRange(targetRow, targetCol);
-          var currentVal = parseFloat(range.getValue()) || 0;
-          
-          range.setValue(currentVal + weight);
+    // Главная функция отправки данных
+    async function sendData(event, type) {
+        event.preventDefault();
+        
+        const selectValue = document.getElementById('pizza-select').value;
+        const pizza = selectValue === 'Другая' ? document.getElementById('custom-pizza').value : selectValue;
+        
+        if (!pizza) return alert('Пожалуйста, выберите или укажите вашу пиццерию.');
+
+        let payload = { type: type, pizza: pizza };
+
+        if (type === 'Заказ') {
+            const t = parseFloat(document.getElementById('qty-tomatoes').value) || 0;
+            const p = parseFloat(document.getElementById('qty-pepper').value) || 0;
+            const i = parseFloat(document.getElementById('qty-iceberg').value) || 0;
+            const c = parseFloat(document.getElementById('qty-cherry').value) || 0;
+            const o = parseFloat(document.getElementById('qty-onion').value) || 0;
+            const m = parseFloat(document.getElementById('qty-mushrooms').value) || 0;
+
+            if (t === 0 && p === 0 && i === 0 && c === 0 && o === 0 && m === 0) {
+                return alert('Пожалуйста, введите количество хотя бы для одного товара.');
+            }
+            
+            payload.tomatoes = t;
+            payload.pepper = p;
+            payload.iceberg = i;
+            payload.cherry = c;
+            payload.onion = o;
+            payload.mushrooms = m;
+        } else {
+            payload.claimText = document.getElementById('claim-text').value;
+            const reasonSelect = document.getElementById('claim-reason');
+            payload.claimReason = reasonSelect.options[reasonSelect.selectedIndex].text;
+
+            const fileInput = document.getElementById('claim-file');
+            if (fileInput && fileInput.files.length > 0) {
+                const claimBtn = document.getElementById('submit-claim-btn');
+                if (claimBtn) claimBtn.innerText = "Сжатие фото...";
+                
+                try {
+                    // ИСПРАВЛЕНО: Добавлен [0] для выбора конкретного файла фотографии с телефона
+                    payload.fileData = await resizeImage(fileInput.files[0]); 
+                } catch (imgError) {
+                    console.error("Ошибка при сжатии фото:", imgError);
+                }
+            }
         }
-      });
 
-      calculateRowSums(sheet);
-    }
-    
-    SpreadsheetApp.flush();
-    return ContentService.createTextOutput(JSON.stringify({"status": "success"})).setMimeType(ContentService.MimeType.JSON);
-  } catch(error) {
-    var errSheet = ss.getSheetByName("Ошибки") || ss.insertSheet("Ошибки");
-    errSheet.appendRow([new Date().toLocaleString("ru-RU"), error.toString()]);
-    return ContentService.createTextOutput(JSON.stringify({"status": "error", "message": error.toString()})).setMimeType(ContentService.MimeType.JSON);
-  }
-}
-
-function archiveAndClearWeeklyOrders() {
-  var ss = getTargetSpreadsheet();
-  var sourceSheet = ss.getSheetByName("Заказы");
-  if (!sourceSheet) return;
-  
-  var date = new Date();
-  var dayNum = date.getUTCDay() || 7;
-  date.setUTCDate(date.getUTCDate() + 4 - dayNum);
-  var yearStart = new Date(Date.UTC(date.getUTCFullYear(),0,1));
-  var weekNo = Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
-  
-  var archiveSheetName = "Архив Неделя " + weekNo + " (" + new Date().getFullYear() + ")";
-  
-  var checkSheet = ss.getSheetByName(archiveSheetName);
-  if (!checkSheet) {
-    var archiveSheet = sourceSheet.copyTo(ss);
-    archiveSheet.setName(archiveSheetName);
-    
-    ss.setActiveSheet(archiveSheet);
-    ss.moveActiveSheet(ss.getSheets().length);
-  }
-  
-  for (var row = 2; row <= 7; row++) {
-    for (var col = 2; col <= 8; col++) {
-      sourceSheet.getRange(row, col).setValue(0);
-    }
-  } 
- 
-  calculateRowSums(sourceSheet);
-  SpreadsheetApp.flush();
-}
-
-function calculateRowSums(sheet) {
-  sheet.getRange(1, 9).setValue("Общий вес, кг. Обновлено: " + new Date().toLocaleDateString("ru-RU"));
-  var lastRow = sheet.getLastRow();
-  if (lastRow > 1) {
-    var dataRange = sheet.getRange(2, 2, lastRow - 1, 7);
-    var values = dataRange.getValues();
-    var results = [];
-    
-    for (var i = 0; i < values.length; i++) {
-      var rowSum = 0;
-      for (var j = 0; j < values[i].length; j++) {
-        var val = parseFloat(String(values[i][j]).replace(",", ".")); 
-        if (!isNaN(val)) {
-          rowSum += val;
+        const btn = type === 'Заказ' ? document.getElementById('submit-order-btn') : document.getElementById('submit-claim-btn');
+        if (btn) {
+            btn.disabled = true;
+            var originalText = btn.innerText;
+            btn.innerText = "Отправка...";
         }
-      }
-      results.push([rowSum > 0 ? rowSum : 0]); 
-    }
-    sheet.getRange(2, 9, results.length, 1).setValues(results);
-  }
-}
 
+        try {
+            await fetch(WEB_APP_URL, {
+                method: "POST",
+                headers: { "Content-Type": "text/plain" },
+                body: JSON.stringify(payload)
+            });
+            
+            alert(`${type} успешно зафиксирован в системе!`);
+            if (type === 'Заказ') document.getElementById('order-form').reset();
+            if (type === 'Претензия') document.getElementById('claim-form').reset();
+            calculateTotal();
+            
+        } catch (error) {
+            alert("Критическая ошибка отправки: " + error.toString());
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerText = originalText;
+            }
+        }
+    }
+
+    loadPrices();
 </script>
+</body>
+</html>
 </body>
 </html>
