@@ -363,11 +363,13 @@
 
     let globalPrices = { tomatoes: 250, pepper: 320, iceberg: 180, cherry: 400, onion: 90, mushrooms: 280 };      
 
-    // 📸 Кроссплатформенное сжатие картинок (работает на iPhone и Android)
+        // 📸 Кроссплатформенное сжатие картинок (работает на iPhone, ПК и Android)
     function resizeImage(file) {
         return new Promise((resolve, reject) => {
+            if (!file) return reject(new Error("Файл не выбран"));
+            
             const img = new Image();
-            img.src = URL.createObjectURL(file);
+            img.src = URL.createObjectURL(file); // Берем переданный одиночный файл
             
             img.onload = () => {
                 const canvas = document.createElement('canvas');
@@ -399,7 +401,7 @@
                 
                 resolve({
                     base64: base64Clean,
-                    name: "phone_photo_" + Date.now() + ".jpg",
+                    name: "photo_" + Date.now() + ".jpg",
                     mimeType: "image/jpeg"
                 });
             };
@@ -407,6 +409,7 @@
             img.onerror = (error) => reject(error);
         });
     }
+
 
     // Загрузка актуальных цен из таблицы
     async function loadPrices() {
@@ -483,24 +486,28 @@
             payload.cherry = c;
             payload.onion = o;
             payload.mushrooms = m;
-        } else {
+               } else {
             payload.claimText = document.getElementById('claim-text').value;
             const reasonSelect = document.getElementById('claim-reason');
             payload.claimReason = reasonSelect.options[reasonSelect.selectedIndex].text;
 
             const fileInput = document.getElementById('claim-file');
-            if (fileInput && fileInput.files.length > 0) {
+            // Универсальная проверка наличия файла, которая работает и на ПК, и на iOS, и на Android
+            if (fileInput && fileInput.files && fileInput.files.length > 0) {
                 const claimBtn = document.getElementById('submit-claim-btn');
                 if (claimBtn) claimBtn.innerText = "Сжатие фото...";
                 
                 try {
-                    // ИСПРАВЛЕНО: Добавлен [0] для выбора конкретного файла фотографии с телефона
-                    payload.fileData = await resizeImage(fileInput.files[0]); 
+                    // Передаем строго первый файл из массива через [0]
+                    const selectedFile = fileInput.files[0];
+                    payload.fileData = await resizeImage(selectedFile); 
                 } catch (imgError) {
                     console.error("Ошибка при сжатии фото:", imgError);
+                    alert("Ошибка сжатия изображения: " + imgError.message);
                 }
             }
         }
+
 
         const btn = type === 'Заказ' ? document.getElementById('submit-order-btn') : document.getElementById('submit-claim-btn');
         if (btn) {
