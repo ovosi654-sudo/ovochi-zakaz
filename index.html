@@ -533,8 +533,11 @@
             if (type === 'Претензия') document.getElementById('claim-form').reset();
             calculateTotal();
             
-        } catch (error) {
-            alert("Ошибка при отправке: " + error.message);
+        }   catch (error) {
+            // Показывает полную техническую ошибку прямо на экране телефона
+            alert("Критическая ошибка отправки: " + error.toString() + "\nЛиния: " + error.stack);
+        }
+
         } finally {
             if (btn) {
                 btn.disabled = false;
