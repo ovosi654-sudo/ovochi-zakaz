@@ -239,124 +239,110 @@
     </style>
 
 </head>
+
 <body>
 
-    <!-- Вкладки навигации -->
-    <div>
-        <button id="tab-order" onclick="switchTab('order')">🛒 Заказ овощей</button>
-        <button id="tab-claim" onclick="switchTab('claim')">⚠️ Претензия</button>
+    <h2>Управление овощами</h2>
+
+    <!-- Кнопки переключения вкладок -->
+    <div class="tab-buttons">
+        <button id="btn-tab-order" class="tab-btn active" onclick="switchTab('order')">Сделать заказ</button>
+        <button id="btn-tab-claim" class="tab-btn" onclick="switchTab('claim')">Претензия</button>
     </div>
 
-    <br>
-
-            <!-- Выбор пиццерии (Точное совпадение со столбцами вашего бланка) -->
-    <div class="form-group">
-        <label for="pizza-select">Ваша пиццерия:</label>
-        <select id="pizza-select" onchange="toggleCustomPizza()">
-            <option value="">-- Выберите вашу точку из списка --</option>
-            <option value="Голубое-1">Голубое-1 ПГТ Голубое Трехсвятская сЗМ</option>
-            <option value="Лобня-2">Лобня-2 Лобня Катюшки 53Г</option>
-            <option value="Москва 12-3">Москва 12-3 Москва Тагильская 4А</option>
-            <option value="Москва 12-4">Москва 12-4 Москва Амурская 1А корп 5</option>
-            <option value="Москва 12-1">Москва 12-1 Москва Большая Черкизовская 30Б</option>
-            <option value="Москва 12-2">Москва 12-2 Москва Большая Семеновская 32с13</option>
-            <option value="Москва 12-5">Москва 12-5 Москва 2 Вольный переулок 11</option>
-            <option value="Другая">Другая пиццерия (вписать адрес вручную)...</option>
-        </select>
+    <!-- Информационный блок цен -->
+    <div class="price-list">
+        <h4 style="margin-top:0; margin-bottom:10px;">Актуальные цены (руб/кг):</h4>
+        <div class="price-item">Томаты: <span><strong id="p-tomatoes">250</strong> руб.</span></div>
+        <div class="price-item">Перец зеленый: <span><strong id="p-pepper">320</strong> руб.</span></div>
+        <div class="price-item">Салат айсберг: <span><strong id="p-iceberg">180</strong> руб.</span></div>
+        <div class="price-item">Томаты Черри: <span><strong id="p-cherry">400</strong> руб.</span></div>
+        <div class="price-item">Лук красный: <span><strong id="p-onion">90</strong> руб.</span></div>
+        <div class="price-item">Шампиньоны: <span><strong id="p-mushrooms">280</strong> руб.</span></div>
+        <small id="load-status" style="color: #6b7280; display:block; margin-top:10px;">Синхронизация цен...</small>
     </div>
 
-
-
-    <div id="custom-pizza-group" style="display: none;">
-        <br>
-        <label for="custom-pizza">Введите название и адрес пиццерии:</label>        
-    </div>
-
-    <br>
-
-    <!-- Вкладка №1: ЗАКАЗ ОВОЩЕЙ -->
-    <form id="order-form" onsubmit="sendData(event, 'Заказ')">        
-        <div id="section-order">
-            <h2>Актуальные цены</h2>
-            <div id="current-date">на сегодня</div>
-            <div id="load-status" style="font-style: italic; color: gray;">Синхронизация цен с таблицей...</div>
-            
-            <br>
-
-            <!-- Список 6 товаров -->
-            <div>
-                <label>🍅 Томаты: <span id="p-tomatoes">250</span> руб/кг</label>
-                <input type="number" id="qty-tomatoes" min="0" step="any" placeholder="0" oninput="calculateTotal()">
-            </div>
-            <br>
-            <div>
-                <label>🫑 Перец зеленый: <span id="p-pepper">320</span> руб/кг</label>
-                <input type="number" id="qty-pepper" min="0" step="any" placeholder="0" oninput="calculateTotal()">
-            </div>
-            <br>
-            <div>
-                <label>🥬 Салат айсберг: <span id="p-iceberg">180</span> руб/кг</label>
-                <input type="number" id="qty-iceberg" min="0" step="any" placeholder="0" oninput="calculateTotal()">
-            </div>
-            <br>
-            <div>
-                <label>🍒 Черри: <span id="p-cherry">400</span> руб/кг</label>
-                <input type="number" id="qty-cherry" min="0" step="any" placeholder="0" oninput="calculateTotal()">
-            </div>
-            <br>
-            <div>
-                <label>🧅 Лук красный: <span id="p-onion">90</span> руб/кг</label>
-                <input type="number" id="qty-onion" min="0" step="any" placeholder="0" oninput="calculateTotal()">
-            </div>
-            <br>
-            <div>
-                <label>🍄 Шампиньоны: <span id="p-mushrooms">280</span> руб/кг</label>
-                <input type="number" id="qty-mushrooms" min="0" step="any" placeholder="0" oninput="calculateTotal()">
-            </div>
-
-            <br>
-            <div><strong>Итого: <span id="total-price">0</span> руб.</strong></div>
-            <br>
-            <button type="submit" id="submit-order-btn">Оформить заказ</button>
+    <!-- Выбор локации (Общий для обеих вкладок) -->
+    <div class="form-card" style="margin-bottom: 20px;">
+        <div class="form-group">
+            <label for="pizza-select">Выберите пиццерию:</label>
+            <select id="pizza-select" onchange="toggleCustomPizza()">
+                <option value="">-- Выберите из списка --</option>
+                <option value="Голубое-1">Голубое-1</option>
+                <option value="Лобня-2">Лобня-2</option>
+                <option value="Москва 12-3">Москва 12-3</option>
+                <option value="Москва 12-4">Москва 12-4</option>
+                <option value="Москва 12-1">Москва 12-1</option>
+                <option value="Москва 12-2">Москва 12-2</option>
+                <option value="Москва 12-5">Москва 12-5</option>
+                <option value="Другая">Другая (указать вручную)</option>
+            </select>
         </div>
-    </form>
+        <div class="form-group" id="custom-pizza-group">
+            <label for="custom-pizza">Название пиццерии вручную:</label>
+            <input type="text" id="custom-pizza" placeholder="Введите название">
+        </div>
+    </div>
 
-    <!-- Вкладка №2: ПРЕТЕНЗИЯ (РЕКЛАМАЦИЯ) -->
-        <form id="claim-form" class="hidden" onsubmit="sendData(event, 'Претензия')">
+    <!-- БЛОК ФОРМ -->
+    <div class="form-card">
+        <!-- ФОРМА 1: ЗАКАЗ -->
+        <form id="order-form" onsubmit="sendData(event, 'Заказ')">
+            <h3>Новый заказ</h3>
+            <div class="form-group">
+                <label>Томаты (кг):</label>
+                <input type="number" id="qty-tomatoes" step="0.1" value="0" min="0" oninput="calculateTotal()">
+            </div>
+            <div class="form-group">
+                <label>Перец зеленый (кг):</label>
+                <input type="number" id="qty-pepper" step="0.1" value="0" min="0" oninput="calculateTotal()">
+            </div>
+            <div class="form-group">
+                <label>Салат айсберг (кг):</label>
+                <input type="number" id="qty-iceberg" step="0.1" value="0" min="0" oninput="calculateTotal()">
+            </div>
+            <div class="form-group">
+                <label>Томаты Черри (кг):</label>
+                <input type="number" id="qty-cherry" step="0.1" value="0" min="0" oninput="calculateTotal()">
+            </div>
+            <div class="form-group">
+                <label>Лук красный (кг):</label>
+                <input type="number" id="qty-onion" step="0.1" value="0" min="0" oninput="calculateTotal()">
+            </div>
+            <div class="form-group">
+                <label>Шампиньоны (кг):</label>
+                <input type="number" id="qty-mushrooms" step="0.1" value="0" min="0" oninput="calculateTotal()">
+            </div>
+            <div style="font-size: 18px; margin: 15px 0; font-weight: bold; text-align: center; color: #1e40af;">
+                Итого: <span id="total-price">0.00</span> руб.
+            </div>
+            <button type="submit" id="submit-order-btn">Отправить заказ</button>
+        </form>
 
-        <div id="section-claim">
-            <h2>Оформить рекламацию</h2>
-            <div>Рассмотрение в течение 2 часов</div>
-            
-            <br>
-
-            <div>
-                <label for="claim-reason">Причина претензии:</label>
+        <!-- ФОРМА 2: ПРЕТЕНЗИЯ -->
+        <form id="claim-form" onsubmit="sendData(event, 'Претензия')" style="display: none;">
+            <h3>Создать претензию</h3>
+            <div class="form-group">
+                <label for="claim-reason">Категория проблемы:</label>
                 <select id="claim-reason">
-                    <option value="Ненадлежащее качество">Ненадлежащее качество товара</option>
-                    <option value="Недовоз / Нехватка веса">Недовоз / Нехватка веса</option>
-                    <option value="Привезли не тот товар">Привезли не тот товар</option>
-                    <option value="Другое">Другое</option>
+                    <option value="Качество">Плохое качество овощей</option>
+                    <option value="Недовоз">Недовоз / Нехватка позиций</option>
+                    <option value="Пересорт">Пересортица товара</option>
+                    <option value="Другое">Другая проблема</option>
                 </select>
-            </div>            
-            
-
-            <!-- 📸 НОВЫЙ БЛОК: Поле для прикрепления фотографии -->
-            <div>
-                <label for="claim-file">Прикрепить фото (обязательно):</label>
+            </div>
+            <div class="form-group">
+                <label for="claim-text">Описание рекламации:</label>
+                <textarea id="claim-text" rows="4" placeholder="Опишите проблему максимально подробно..."></textarea>
+            </div>
+            <div class="form-group">
+                <label for="claim-file">Фотография брака (с камеры телефона):</label>
                 <input type="file" id="claim-file" accept="image/*">
             </div>
-
-            <br>
-
-            <div>
-                <label for="claim-text">Описание проблемы:</label>
-                <textarea id="claim-text" rows="4" placeholder="Напишите, что не так с поставкой..." required></textarea>
-            </div>
-            
-            <br>
             <button type="submit" id="submit-claim-btn">Отправить претензию</button>
-    </form>
+        </form>
+    </div>
+
 <script>
     // ⚠️ ВСТАВЬТЕ СЮДА ВАШУ САМУЮ СВЕЖУЮ ССЫЛКУ ИЗ GOOGLE APPS SCRIPT
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz_KK6QBw1QreLA1Z7-hlUdmeSIK0ppA2_jp1RvAayeupHoO6Wv-CwWDW5BHBvwmB1wog/exec"; 
