@@ -363,18 +363,17 @@
 
     let globalPrices = { tomatoes: 250, pepper: 320, iceberg: 180, cherry: 400, onion: 90, mushrooms: 280 };      
 
-         // 📸 Кроссплатформенное сжатие картинок (работает на iPhone и Android)
+    // 📸 Кроссплатформенное сжатие картинок (работает на iPhone и Android)
     function resizeImage(file) {
         return new Promise((resolve, reject) => {
             const img = new Image();
-            img.src = URL.createObjectURL(file); // Более надежный метод для мобильных ОС вместо FileReader
+            img.src = URL.createObjectURL(file);
             
             img.onload = () => {
                 const canvas = document.createElement('canvas');
                 let width = img.width;
                 let height = img.height;
                 
-                // Оптимальный размер для мобильной загрузки в Google Таблицы
                 const MAX_SIZE = 800; 
                 if (width > height) {
                     if (width > MAX_SIZE) {
@@ -393,27 +392,21 @@
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(img, 0, 0, width, height);
                 
-                // Получаем DataURL и принудительно очищаем от любых мобильных префиксов
                 const dataUrl = canvas.toDataURL('image/jpeg', 0.4); 
                 const base64Clean = dataUrl.replace(/^data:image\/[a-z]+;base64,/, ""); 
                 
-                // Освобождаем память телефона
                 URL.revokeObjectURL(img.src); 
                 
                 resolve({
                     base64: base64Clean,
                     name: "phone_photo_" + Date.now() + ".jpg",
                     mimeType: 'image/jpeg'
-                    });
+                });
             };
             
-            img.onerror = (error) => {
-                reject(error);
-            };
+            img.onerror = (error) => reject(error);
         });
     }
-
-
 
     // Загрузка актуальных цен из таблицы
     async function loadPrices() {
@@ -497,7 +490,6 @@
                 return alert('Пожалуйста, введите количество хотя бы для одного товара.');
             }
             
-            // НОВАЯ СТРУКТУРА: Передаем значения строго под новые переменные бэкенда столбцов
             payload.tomatoes = t;
             payload.pepper = p;
             payload.iceberg = i;
