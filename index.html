@@ -361,30 +361,7 @@
     // ⚠️ ВСТАВЬТЕ СЮДА ВАШУ САМУЮ СВЕЖУЮ ССЫЛКУ ИЗ GOOGLE APPS SCRIPT
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwDD8IuzCZlfWIFmhySWfYAYVdurjsLHSsVPVhtfOMRQKtstVnzQRQou5g7POYD2Kr8WQ/exec"; 
 
-    let globalPrices = { tomatoes: 250, pepper: 320, iceberg: 180, cherry: 400, onion: 90, mushrooms: 280 };
-
-      // 1. Записываем заголовок и дату в ячейку I1
-  sourceSheet.getRange(1, 9).setValue("Общий вес, кг. Обновлено: " + new Date().toLocaleDateString("ru-RU"));
-  
-  // 2. Считаем суммы по строкам (от столбца B до H)
-  var lastRow = sourceSheet.getLastRow();
-  if (lastRow > 1) {
-    var dataRange = sourceSheet.getRange(2, 2, lastRow - 1, 7);
-    var values = dataRange.getValues();
-    var results = [];
-    
-    for (var i = 0; i < values.length; i++) {
-      var rowSum = 0;
-      for (var j = 0; j < values[i].length; j++) {
-        var val = parseFloat(String(values[i][j]).replace(",", ".")); 
-        if (!isNaN(val)) { rowSum += val; }
-      }
-      results.push([rowSum > 0 ? rowSum : ""]); 
-    }
-    // Записываем суммы в столбец I (9-й столбец)
-    sourceSheet.getRange(2, 9, results.length, 1).setValues(results);
-  }
-  SpreadsheetApp.flush();
+    let globalPrices = { tomatoes: 250, pepper: 320, iceberg: 180, cherry: 400, onion: 90, mushrooms: 280 };      
 
     // 📸 Функция сжатия и оптимизации картинок брака
     function resizeImage(file) {
