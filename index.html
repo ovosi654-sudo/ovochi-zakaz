@@ -622,7 +622,7 @@
             }
         }
 
-                const btn = type === 'Заказ' ? document.getElementById('submit-order-btn') : document.getElementById('submit-claim-btn');
+        const btn = type === 'Заказ' ? document.getElementById('submit-order-btn') : document.getElementById('submit-claim-btn');
         if (btn) {
             btn.disabled = true;
             var originalText = btn.innerText;
@@ -642,7 +642,7 @@
             calculateTotal();
             
         } catch (error) {
-            alert("Критическая ошибка отправки: " + error.toString());
+            alert("Ошибка при отправке: " + error.message);
         } finally {
             if (btn) {
                 btn.disabled = false;
@@ -655,5 +655,3 @@
 </script>
 </body>
 </html>
-
-
