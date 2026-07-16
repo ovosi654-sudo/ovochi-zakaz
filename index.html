@@ -363,7 +363,7 @@
 
     let globalPrices = { tomatoes: 250, pepper: 320, iceberg: 180, cherry: 400, onion: 90, mushrooms: 280 };      
 
-    // 📸 Функция сжатия и оптимизации картинок брака
+        // 📸 Оптимизированная функция сжатия картинок для мобильных телефонов
     function resizeImage(file) {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
@@ -376,10 +376,18 @@
                     let width = img.width;
                     let height = img.height;
                     
-                    const MAX_WIDTH = 1000;
-                    if (width > MAX_WIDTH) {
-                        height *= MAX_WIDTH / width;
-                        width = MAX_WIDTH;
+                    // Жесткое ограничение размера для мобильных устройств (макс 800px)
+                    const MAX_SIZE = 800; 
+                    if (width > height) {
+                        if (width > MAX_SIZE) {
+                            height *= MAX_SIZE / width;
+                            width = MAX_SIZE;
+                        }
+                    } else {
+                        if (height > MAX_SIZE) {
+                            width *= MAX_SIZE / height;
+                            height = MAX_SIZE;
+                        }
                     }
                     
                     canvas.width = width;
@@ -387,10 +395,11 @@
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, width, height);
                     
-                    const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+                    // Снижаем качество до 0.5 (оптимально для веса до 100 Кб)
+                    const dataUrl = canvas.toDataURL('image/jpeg', 0.5); 
                     resolve({
-                        base64: dataUrl.split(',')[1], // Чистый base64 код без префикса
-                        name: file.name.replace(/\.[^/.]+$/, "") + ".jpg",
+                        base64: dataUrl.indexOf("base64,") !== -1 ? dataUrl.split('base64,')[1] : dataUrl,
+                        name: "phone_photo_" + Date.now() + ".jpg",
                         mimeType: 'image/jpeg'
                     });
                 };
@@ -398,6 +407,7 @@
             reader.onerror = (error) => reject(error);
         });
     }
+
 
     // Загрузка актуальных цен из таблицы
     async function loadPrices() {
